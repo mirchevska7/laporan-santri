@@ -97,11 +97,27 @@
       background: #111827;
     }
 
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
     .info {
       margin-top: 20px;
       text-align: center;
       color: #9ca3af;
       font-size: 12px;
+    }
+
+    .error-message {
+      display: none;
+      margin-bottom: 18px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #fef2f2;
+      color: #b91c1c;
+      font-size: 13px;
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -118,7 +134,9 @@
       Sistem Laporan Perkembangan Santri
     </p>
 
-    <form>
+    <form id="loginForm">
+
+      <div class="error-message" id="errorMessage"></div>
 
       <label for="username">Username</label>
       <input
@@ -126,6 +144,7 @@
         id="username"
         placeholder="Masukkan username"
         autocomplete="username"
+        required
       >
 
       <label for="password">Password</label>
@@ -134,6 +153,7 @@
         id="password"
         placeholder="Masukkan password"
         autocomplete="current-password"
+        required
       >
 
       <button type="submit" id="loginButton">
@@ -159,58 +179,131 @@
     SUPABASE_KEY
   );
 
-  async function login() {
-    const username = document.getElementById('username').value.trim();
+  const loginForm = document.getElementById('loginForm');
+  const loginButton = document.getElementById('loginButton');
+  const errorMessage = document.getElementById('errorMessage');
+
+  function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+  }
+
+  function clearError() {
+    errorMessage.textContent = '';
+    errorMessage.style.display = 'none';
+  }
+
+  loginForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    clearError();
+
+    const username = document.getElementById('username').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
 
     if (!username || !password) {
-      alert('Username dan password wajib diisi.');
+      showError('Username dan password wajib diisi.');
       return;
     }
 
-    const { data: email, error: emailError } =
-      await supabaseClient.rpc('get_login_email', {
-        p_username: username
-      });
+    loginButton.disabled = true;
+    loginButton.textContent = 'Memproses...';
 
-    if (emailError || !email) {
-      alert('Username tidak ditemukan.');
-      return;
+    try {
+      // 1. Cari email Auth berdasarkan username.
+      const { data: email, error: emailError } =
+        await supabaseClient.rpc('get_login_email', {
+          p_username: username
+        });
+
+      if (emailError) {
+        console.error('RPC error:', emailError);
+        showError('Terjadi kesalahan saat mencari akun.');
+        return;
+      }
+
+      if (!email) {
+        showError('Username tidak ditemukan atau akun tidak aktif.');
+        return;
+      }
+
+      // 2. Login menggunakan Supabase Auth.
+      const { data: authData, error: authError } =
+        await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+      if (authError) {
+        console.error('Auth error:', authError);
+        showError('Login gagal. Periksa username dan password.');
+        return;
+      }
+
+      if (!authData.user) {
+        showError('Login gagal: akun pengguna tidak ditemukan.');
+        return;
+      }
+
+      // 3. Ambil data pengguna dan role dari public.users.
+      const { data: userData, error: userError } =
+        await supabaseClient
+          .from('users')
+          .select('nama, username, role, aktif')
+          .eq('id', authData.user.id)
+          .single();
+
+      if (userError || !userData) {
+        console.error('User data error:', userError);
+        await supabaseClient.auth.signOut();
+        showError('Data pengguna tidak ditemukan di sistem.');
+        return;
+      }
+
+      if (!userData.aktif) {
+        await supabaseClient.auth.signOut();
+        showError('Akun pengguna sedang tidak aktif.');
+        return;
+      }
+
+      // 4. Arahkan pengguna sesuai role.
+      switch (userData.role) {
+        case 'admin':
+          window.location.href = 'admin.html';
+          break;
+
+        case 'wali_santri':
+          window.location.href = 'wali.html';
+          break;
+
+        case 'kepengasuhan':
+          window.location.href = 'kepengasuhan.html';
+          break;
+
+        case 'wali_asrama':
+          window.location.href = 'wali-asrama.html';
+          break;
+
+        case 'wali_kelas':
+          window.location.href = 'wali-kelas.html';
+          break;
+
+        case 'pembimbing_tahfizh':
+          window.location.href = 'tahfizh.html';
+          break;
+
+        default:
+          await supabaseClient.auth.signOut();
+          showError('Role akun belum memiliki dashboard.');
+      }
+
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      showError('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      loginButton.disabled = false;
+      loginButton.textContent = 'Masuk';
     }
-
-    const { data, error } =
-      await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-
-    if (error) {
-      alert('Login gagal: ' + error.message);
-      return;
-    }
-
-    const { data: userData, error: userError } =
-      await supabaseClient
-        .from('users')
-        .select('nama, username, role')
-        .eq('id', data.user.id)
-        .single();
-
-    if (userError || !userData) {
-      alert('Data pengguna tidak ditemukan.');
-      return;
-    }
-
-    if (userData.role === 'admin') {
-      window.location.href = 'admin.html';
-    } else if (userData.role === 'wali_santri') {
-      window.location.href = 'wali.html';
-    } else {
-      alert('Login berhasil, tetapi dashboard role ini belum dibuat.');
-    }
-  }
-
-  document.getElementById('loginButton').addEventListener('click', login);
+  });
 </script>
 
 </body>
