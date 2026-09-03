@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan Santri</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      padding: 35px 30px;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .logo {
+      width: 65px;
+      height: 65px;
+      margin: 0 auto 18px;
+      border-radius: 16px;
+      background: #1f2937;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1f2937;
+      margin-bottom: 8px;
+      font-size: 25px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 15px;
+      margin-bottom: 18px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #374151;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #1f2937;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #111827;
+    }
+
+    .info {
+      margin-top: 20px;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="login-box">
+
+    <div class="logo">LS</div>
+
+    <h1>Laporan Santri</h1>
+
+    <p class="subtitle">
+      Sistem Laporan Perkembangan Santri
+    </p>
+
+    <form>
+
+      <label for="username">Username</label>
+      <input
+        type="text"
+        id="username"
+        placeholder="Masukkan username"
+        autocomplete="username"
+      >
+
+      <label for="password">Password</label>
+      <input
+        type="password"
+        id="password"
+        placeholder="Masukkan password"
+        autocomplete="current-password"
+      >
+
+      <button type="submit" id="loginButton">
+        Masuk
+      </button>
+
+    </form>
+
+    <p class="info">
+      Akses sesuai akun dan hak pengguna
+    </p>
+
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = 'https://zcnpyqxsdpnunbeuyvxu.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4';
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  async function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!username || !password) {
+      alert('Username dan password wajib diisi.');
+      return;
+    }
+
+    const { data: email, error: emailError } =
+      await supabaseClient.rpc('get_login_email', {
+        p_username: username
+      });
+
+    if (emailError || !email) {
+      alert('Username tidak ditemukan.');
+      return;
+    }
+
+    const { data, error } =
+      await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+    if (error) {
+      alert('Login gagal: ' + error.message);
+      return;
+    }
+
+    const { data: userData, error: userError } =
+      await supabaseClient
+        .from('users')
+        .select('nama, username, role')
+        .eq('id', data.user.id)
+        .single();
+
+    if (userError || !userData) {
+      alert('Data pengguna tidak ditemukan.');
+      return;
+    }
+
+    if (userData.role === 'admin') {
+      window.location.href = 'admin.html';
+    } else if (userData.role === 'wali_santri') {
+      window.location.href = 'wali.html';
+    } else {
+      alert('Login berhasil, tetapi dashboard role ini belum dibuat.');
+    }
+  }
+
+  document.getElementById('loginButton').addEventListener('click', login);
+</script>
+
+</body>
+</html>
