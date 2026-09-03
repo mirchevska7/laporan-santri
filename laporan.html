@@ -6,7 +6,7 @@
 <title>Laporan Bulanan - Laporan Santri</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fa;color:#18212f}.top{background:#fff;border-bottom:1px solid #e7ebf0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}.brand{display:flex;align-items:center;gap:11px}.logo{width:40px;height:40px;border-radius:11px;background:#18212f;color:#fff;display:grid;place-items:center;font-weight:700}.brand h1{font-size:16px;margin:0}.brand p{font-size:11px;color:#7a8697;margin:3px 0 0}.back{border:1px solid #dfe4ea;background:#fff;border-radius:10px;padding:8px 12px;color:#445064}.wrap{max-width:1000px;margin:auto;padding:24px 16px 40px}.head{margin-bottom:18px}.head h2{margin:0 0 5px;font-size:24px}.head p{margin:0;color:#718096;font-size:13px}.toolbar{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:15px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar label{font-size:12px;color:#687386}.toolbar select{border:1px solid #dfe4ea;border-radius:9px;padding:9px 12px;background:#fff;min-width:240px}.student{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:17px;margin-bottom:18px}.student strong{font-size:16px}.student span{display:block;color:#7a8697;font-size:12px;margin-top:4px}.section{background:#fff;border:1px solid #e7ebf0;border-radius:15px;margin-bottom:14px;overflow:hidden}.section h3{margin:0;padding:15px 17px;border-bottom:1px solid #edf0f3;font-size:16px}.body{padding:16px}.rows{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row{background:#f7f8fa;border-radius:10px;padding:12px}.row .label{display:block;color:#7a8697;font-size:11px;margin-bottom:5px}.row .value{font-size:14px;line-height:1.5}.note{margin-top:10px;background:#f7f8fa;border-radius:10px;padding:13px;font-size:13px;line-height:1.6}.muted{color:#7a8697;font-size:13px}.status{padding:12px;border-radius:10px;background:#f7f8fa;color:#667085;font-size:12px;margin-bottom:16px}.error{background:#fff0f0;color:#b42318}.empty{text-align:center;padding:35px;color:#7a8697;font-size:13px}.footer{text-align:center;color:#8a94a3;font-size:11px;margin-top:25px}.section-meta{font-size:11px;color:#7a8697;margin:0 17px 14px}.published{font-size:12px;color:#667085;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}@media(max-width:650px){.rows{grid-template-columns:1fr}.toolbar select{width:100%}.wrap{padding:20px 13px 35px}}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fa;color:#18212f}.top{background:#fff;border-bottom:1px solid #e7ebf0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}.brand{display:flex;align-items:center;gap:11px}.logo{width:40px;height:40px;border-radius:11px;background:#18212f;color:#fff;display:grid;place-items:center;font-weight:700}.brand h1{font-size:16px;margin:0}.brand p{font-size:11px;color:#7a8697;margin:3px 0 0}.back{border:1px solid #dfe4ea;background:#fff;border-radius:10px;padding:8px 12px;color:#445064}.wrap{max-width:1000px;margin:auto;padding:24px 16px 40px}.head{margin-bottom:18px}.head h2{margin:0 0 5px;font-size:24px}.head p{margin:0;color:#718096;font-size:13px}.toolbar{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:15px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar label{font-size:12px;color:#687386}.toolbar select{border:1px solid #dfe4ea;border-radius:9px;padding:9px 12px;background:#fff;min-width:240px}.student{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:17px;margin-bottom:18px}.student strong{font-size:16px}.student span{display:block;color:#7a8697;font-size:12px;margin-top:4px}.section{background:#fff;border:1px solid #e7ebf0;border-radius:15px;margin-bottom:14px;overflow:hidden}.section h3{margin:0;padding:15px 17px;border-bottom:1px solid #edf0f3;font-size:16px}.body{padding:16px}.rows{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row{background:#f7f8fa;border-radius:10px;padding:12px}.row .label{display:block;color:#7a8697;font-size:11px;margin-bottom:5px}.row .value{font-size:14px;line-height:1.5}.note{margin-top:10px;background:#f7f8fa;border-radius:10px;padding:13px;font-size:13px;line-height:1.6}.muted{color:#7a8697;font-size:13px}.status{padding:12px;border-radius:10px;background:#f7f8fa;color:#667085;font-size:12px;margin-bottom:16px}.error{background:#fff0f0;color:#b42318}.empty{text-align:center;padding:35px;color:#7a8697;font-size:13px}.footer{text-align:center;color:#8a94a3;font-size:11px;margin-top:25px}.published{font-size:12px;color:#667085;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}.detail-title{margin:18px 0 10px;font-size:15px;color:#18212f}.detail-title:first-child{margin-top:0}@media(max-width:650px){.rows{grid-template-columns:1fr}.toolbar select{width:100%}.wrap{padding:20px 13px 35px}}
 </style>
 </head>
 <body>
@@ -37,6 +37,7 @@ function fail(m){const x=document.getElementById('status');x.textContent=m;x.cla
 function periodLabel(p){return (bulan[p.bulan]||('Bulan '+p.bulan))+' '+(p.tahun||'')}
 function formatTanggalWaktu(value){if(!value)return '-';const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);return new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Jakarta'}).format(d)+' WIB'}
 async function getReportPeople(laporanId){const {data,error}=await db.rpc('get_laporan_pengguna',{p_laporan_id:laporanId});if(error)return {};return Object.fromEntries((data||[]).map(x=>[x.user_id,x.nama||'Pengguna']))}
+async function getWaliReportDetail(laporanId){const {data,error}=await db.rpc('get_wali_laporan_detail',{p_laporan_id:laporanId});if(error)throw new Error(error.message);return data||{}}
 async function init(){
   const {data:{session}}=await db.auth.getSession();
   if(!session){location.href='index.html';return}
@@ -59,27 +60,28 @@ async function loadReports(){
   for(const s of santriList){
     const {data:lb,error:e}=await db.from('laporan_bulanan').select('*').eq('santri_id',s.id).eq('periode_id',pid).limit(1).maybeSingle();
     if(e){out.innerHTML='<div class="empty">Data laporan belum bisa dibaca.<br><br><small>'+esc(e.message)+'</small></div>';return}
-    if(!lb)continue;found++;html+=await buildReport(s,lb)
+    if(!lb||String(lb.status||'').toLowerCase()!=='terbit')continue;found++;html+=await buildReport(s,lb)
   }
   out.innerHTML=found?html:'<div class="empty">Belum ada laporan yang dapat ditampilkan untuk periode ini.<br>Laporan hanya tampil kepada wali setelah berstatus <b>Terbit</b>.</div>'
 }
 async function buildReport(s,lb){
   const people=await getReportPeople(lb.id);
   const publisher=lb.diterbitkan_oleh?(people[lb.diterbitkan_oleh]||'Pengguna'):null;
+  let detail={};
+  try{detail=await getWaliReportDetail(lb.id)}catch(e){return '<section class="section"><h3>📋 '+esc(s.nama_lengkap||s.nama_panggilan||'Santri')+'</h3><div class="body"><div class="note">Laporan sudah terbit, tetapi rincian laporan belum dapat dimuat.</div></div></section>'}
   let html='<section class="section"><h3>📋 '+esc(s.nama_lengkap||s.nama_panggilan||'Santri')+'</h3><div class="body">';
-  html+='<div class="rows">'+[['Status laporan',lb.status==='terbit'?'Terbit':lb.status],['Tanggal terbit',formatTanggalWaktu(lb.diterbitkan_pada)],['Kelas',lb.kelas_snapshot],['Asrama',lb.asrama_snapshot]].map(x=>'<div class="row"><span class="label">'+x[0]+'</span><span class="value">'+esc(x[1]||'-')+'</span></div>').join('')+'</div>';
+  html+='<div class="rows">'+[['Status laporan','Terbit'],['Tanggal terbit',formatTanggalWaktu(lb.diterbitkan_pada)],['Kelas',lb.kelas_snapshot],['Asrama',lb.asrama_snapshot]].map(x=>'<div class="row"><span class="label">'+x[0]+'</span><span class="value">'+esc(x[1]||'-')+'</span></div>').join('')+'</div>';
   if(publisher)html+='<div class="published">Diterbitkan oleh <strong>'+esc(publisher)+'</strong></div>';
-  if(String(lb.status||'').toLowerCase()!=='terbit')return html+'<div class="note">Laporan ini belum diterbitkan.</div></div></section>';
-  for(const [name,table] of [['Akademik','laporan_akademik'],['Tahfizh','laporan_tahfizh'],['Kepengasuhan','laporan_kepengasuhan'],['Ringkasan Perkembangan','ringkasan_perkembangan']]){
-    let r=await db.from(table).select('*').eq('laporan_bulanan_id',lb.id).limit(1).maybeSingle();
-    if(r.error)r=await db.from(table).select('*').eq('laporan_id',lb.id).limit(1).maybeSingle();
-    if(!r.error&&r.data)html+='<div class="section" style="margin-top:12px"><h3>'+name+'</h3><div class="body">'+renderObject(r.data,people)+'</div></div>'
+  const sections=[['Akademik','akademik'],['Tahfizh','tahfizh'],['Kepengasuhan','kepengasuhan'],['Ringkasan Perkembangan','ringkasan']];
+  for(const [title,key] of sections){
+    html+='<h4 class="detail-title">'+title+'</h4>';
+    html+=detail[key]?renderObject(detail[key],people):'<div class="muted">Belum ada rincian.</div>';
   }
   return html+'</div></section>'
 }
 function renderObject(o,people){
   const ignore=['id','laporan_bulanan_id','laporan_id','created_at','updated_at','santri_id','status'];
-  const e=Object.entries(o).filter(([k,v])=>!ignore.includes(k)&&v!==null&&v!=='');
+  const e=Object.entries(o||{}).filter(([k,v])=>!ignore.includes(k)&&v!==null&&v!=='');
   if(!e.length)return '<div class="muted">Belum ada rincian.</div>';
   return '<div class="rows">'+e.map(([k,v])=>{
     if(['diisi_oleh','dibuat_oleh'].includes(k)){return '<div class="row"><span class="label">'+(k==='diisi_oleh'?'Diisi oleh':'Dibuat oleh')+'</span><span class="value">'+esc(people[v]||'Pengguna')+'</span></div>'}
