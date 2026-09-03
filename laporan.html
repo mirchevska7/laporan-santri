@@ -1,1 +1,94 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Laporan Bulanan - Laporan Santri</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fa;color:#18212f}.top{background:#fff;border-bottom:1px solid #e7ebf0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}.brand{display:flex;align-items:center;gap:11px}.logo{width:40px;height:40px;border-radius:11px;background:#18212f;color:#fff;display:grid;place-items:center;font-weight:700}.brand h1{font-size:16px;margin:0}.brand p{font-size:11px;color:#7a8697;margin:3px 0 0}.back{border:1px solid #dfe4ea;background:#fff;border-radius:10px;padding:8px 12px;color:#445064}.wrap{max-width:1000px;margin:auto;padding:24px 16px 40px}.head{margin-bottom:18px}.head h2{margin:0 0 5px;font-size:24px}.head p{margin:0;color:#718096;font-size:13px}.toolbar{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:15px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar label{font-size:12px;color:#687386}.toolbar select{border:1px solid #dfe4ea;border-radius:9px;padding:9px 12px;background:#fff;min-width:240px}.student{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:17px;margin-bottom:18px}.student strong{font-size:16px}.student span{display:block;color:#7a8697;font-size:12px;margin-top:4px}.section{background:#fff;border:1px solid #e7ebf0;border-radius:15px;margin-bottom:14px;overflow:hidden}.section h3{margin:0;padding:15px 17px;border-bottom:1px solid #edf0f3;font-size:16px}.body{padding:16px}.rows{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row{background:#f7f8fa;border-radius:10px;padding:12px}.row .label{display:block;color:#7a8697;font-size:11px;margin-bottom:5px}.row .value{font-size:14px;line-height:1.5}.note{margin-top:10px;background:#f7f8fa;border-radius:10px;padding:13px;font-size:13px;line-height:1.6}.muted{color:#7a8697;font-size:13px}.status{padding:12px;border-radius:10px;background:#f7f8fa;color:#667085;font-size:12px;margin-bottom:16px}.error{background:#fff0f0;color:#b42318}.empty{text-align:center;padding:35px;color:#7a8697;font-size:13px}.footer{text-align:center;color:#8a94a3;font-size:11px;margin-top:25px}@media(max-width:650px){.rows{grid-template-columns:1fr}.toolbar select{width:100%}.wrap{padding:20px 13px 35px}}</style></head><body><header class="top"><div class="brand"><div class="logo">LS</div><div><h1>Laporan Santri</h1><p>Portal Wali Santri</p></div></div><button class="back" id="back">← Dashboard</button></header><main class="wrap"><div class="head"><h2>Laporan Bulanan</h2><p>Perkembangan santri berdasarkan laporan yang telah diterbitkan.</p></div><div id="status" class="status">Memuat data...</div><div class="toolbar"><label for="periode">Periode</label><select id="periode"><option value="">Memuat periode...</option></select></div><div id="student" class="student" style="display:none"></div><div id="report"><div class="empty">Memuat laporan...</div></div><div class="footer">Laporan Santri • Portal Wali Santri</div></main><script>const SUPABASE_URL='https://zcnpyqxsdpnunbeuyvxu.supabase.co',SUPABASE_KEY='sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4',db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);let santriList=[];const esc=v=>String(v??'-').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const bulan=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];function fail(m){const x=document.getElementById('status');x.textContent=m;x.classList.add('error');document.getElementById('report').innerHTML='<div class="empty">Belum dapat menampilkan laporan.</div>'}function periodLabel(p){return (bulan[p.bulan]||('Bulan '+p.bulan))+' '+(p.tahun||'')}async function init(){const {data:{session}}=await db.auth.getSession();if(!session){location.href='index.html';return}const {data:u,error:ue}=await db.from('users').select('nama,username,role,aktif').eq('id',session.user.id).single();if(ue||!u||u.role!=='wali_santri'||!u.aktif){await db.auth.signOut();location.href='index.html';return}const {data:links,error:le}=await db.from('santri_wali').select('santri_id').eq('user_id',session.user.id).eq('aktif',true);if(le)return fail(le.message);if(!links?.length)return fail('Belum ada santri yang terhubung dengan akun ini.');const ids=links.map(x=>x.santri_id);const {data:ss,error:se}=await db.from('santri').select('*').in('id',ids);if(se)return fail(se.message);santriList=ss||[];const {data:ps,error:pe}=await db.from('periode_laporan').select('id,bulan,tahun,semester,status').order('tahun',{ascending:false}).order('bulan',{ascending:false});if(pe)return fail(pe.message);const sel=document.getElementById('periode');sel.innerHTML='';if(!ps?.length)sel.innerHTML='<option value="">Belum ada periode</option>';else ps.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=periodLabel(p);sel.appendChild(o)});sel.onchange=loadReports;renderStudent();await loadReports();document.getElementById('status').textContent='Data berhasil dimuat.'}function renderStudent(){const b=document.getElementById('student');b.style.display='block';b.innerHTML='<strong>Santri yang terhubung</strong><span>'+santriList.map(s=>esc(s.nama_lengkap||s.nama_panggilan||'-')+' • NIS '+esc(s.nis||'-')).join('<br>')+'</span>'}async function loadReports(){const pid=document.getElementById('periode').value;if(!pid)return;const out=document.getElementById('report');out.innerHTML='<div class="empty">Memuat laporan...</div>';let html='',found=0;for(const s of santriList){const {data:lb,error:e}=await db.from('laporan_bulanan').select('*').eq('santri_id',s.id).eq('periode_id',pid).limit(1).maybeSingle();if(e){out.innerHTML='<div class="empty">Data laporan belum bisa dibaca. Kemungkinan akses RLS wali santri belum diaktifkan.<br><br><small>'+esc(e.message)+'</small></div>';return}if(!lb)continue;found++;html+=await buildReport(s,lb)}out.innerHTML=found?html:'<div class="empty">Belum ada laporan yang dapat ditampilkan untuk periode ini.<br>Laporan hanya tampil kepada wali setelah berstatus <b>Terbit</b>.</div>'}async function buildReport(s,lb){let html='<section class="section"><h3>📋 '+esc(s.nama_lengkap||s.nama_panggilan||'Santri')+'</h3><div class="body">';html+='<div class="rows">'+[['Status laporan',lb.status],['Tanggal terbit',lb.tanggal_terbit||lb.diterbitkan_pada||lb.published_at],['Kelas',lb.kelas_snapshot],['Asrama',lb.asrama_snapshot]].map(x=>'<div class="row"><span class="label">'+x[0]+'</span><span class="value">'+esc(x[1]||'-')+'</span></div>').join('')+'</div>';if(String(lb.status||'').toLowerCase()!=='terbit'){return html+'<div class="note">Laporan ini belum diterbitkan.</div></div></section>'}for(const [name,table] of [['Akademik','laporan_akademik'],['Tahfizh','laporan_tahfizh'],['Kepengasuhan','laporan_kepengasuhan'],['Ringkasan Perkembangan','ringkasan_perkembangan']]){let r=await db.from(table).select('*').eq('laporan_bulanan_id',lb.id).limit(1).maybeSingle();if(r.error)r=await db.from(table).select('*').eq('laporan_id',lb.id).limit(1).maybeSingle();if(!r.error&&r.data)html+='<div class="section" style="margin-top:12px"><h3>'+name+'</h3><div class="body">'+renderObject(r.data)+'</div></div>'}return html+'</div></section>'}function renderObject(o){const ignore=['id','laporan_bulanan_id','laporan_id','created_at','updated_at','santri_id'];const e=Object.entries(o).filter(([k,v])=>!ignore.includes(k)&&v!==null&&v!=='');if(!e.length)return '<div class="muted">Belum ada rincian.</div>';return '<div class="rows">'+e.map(([k,v])=>'<div class="row"><span class="label">'+esc(k.replaceAll('_',' '))+'</span><span class="value">'+esc(v)+'</span></div>').join('')+'</div>'}document.getElementById('back').onclick=()=>location.href='wali.html';init();</script></body></html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Laporan Bulanan - Laporan Santri</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fa;color:#18212f}.top{background:#fff;border-bottom:1px solid #e7ebf0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}.brand{display:flex;align-items:center;gap:11px}.logo{width:40px;height:40px;border-radius:11px;background:#18212f;color:#fff;display:grid;place-items:center;font-weight:700}.brand h1{font-size:16px;margin:0}.brand p{font-size:11px;color:#7a8697;margin:3px 0 0}.back{border:1px solid #dfe4ea;background:#fff;border-radius:10px;padding:8px 12px;color:#445064}.wrap{max-width:1000px;margin:auto;padding:24px 16px 40px}.head{margin-bottom:18px}.head h2{margin:0 0 5px;font-size:24px}.head p{margin:0;color:#718096;font-size:13px}.toolbar{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:15px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar label{font-size:12px;color:#687386}.toolbar select{border:1px solid #dfe4ea;border-radius:9px;padding:9px 12px;background:#fff;min-width:240px}.student{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:17px;margin-bottom:18px}.student strong{font-size:16px}.student span{display:block;color:#7a8697;font-size:12px;margin-top:4px}.section{background:#fff;border:1px solid #e7ebf0;border-radius:15px;margin-bottom:14px;overflow:hidden}.section h3{margin:0;padding:15px 17px;border-bottom:1px solid #edf0f3;font-size:16px}.body{padding:16px}.rows{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row{background:#f7f8fa;border-radius:10px;padding:12px}.row .label{display:block;color:#7a8697;font-size:11px;margin-bottom:5px}.row .value{font-size:14px;line-height:1.5}.note{margin-top:10px;background:#f7f8fa;border-radius:10px;padding:13px;font-size:13px;line-height:1.6}.muted{color:#7a8697;font-size:13px}.status{padding:12px;border-radius:10px;background:#f7f8fa;color:#667085;font-size:12px;margin-bottom:16px}.error{background:#fff0f0;color:#b42318}.empty{text-align:center;padding:35px;color:#7a8697;font-size:13px}.footer{text-align:center;color:#8a94a3;font-size:11px;margin-top:25px}.section-meta{font-size:11px;color:#7a8697;margin:0 17px 14px}.published{font-size:12px;color:#667085;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}@media(max-width:650px){.rows{grid-template-columns:1fr}.toolbar select{width:100%}.wrap{padding:20px 13px 35px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand"><div class="logo">LS</div><div><h1>Laporan Santri</h1><p>Portal Wali Santri</p></div></div><button class="back" id="back">← Dashboard</button></header>
+<main class="wrap">
+<div class="head"><h2>Laporan Bulanan</h2><p>Perkembangan santri berdasarkan laporan yang telah diterbitkan.</p></div>
+<div id="status" class="status">Memuat data...</div>
+<div class="toolbar"><label for="periode">Periode</label><select id="periode"><option value="">Memuat periode...</option></select></div>
+<div id="student" class="student" style="display:none"></div>
+<div id="report"><div class="empty">Memuat laporan...</div></div>
+<div class="footer">Laporan Santri • Portal Wali Santri</div>
+</main>
+<script>
+const SUPABASE_URL='https://zcnpyqxsdpnunbeuyvxu.supabase.co';
+const SUPABASE_KEY='sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4';
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let santriList=[];
+const bulan=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const labelMap={
+  kehadiran:'Kehadiran',keaktifan:'Keaktifan Belajar',kedisiplinan:'Kedisiplinan Belajar',tanggung_jawab:'Tanggung Jawab Tugas',
+  sikap:'Sikap dalam Pembelajaran',perkembangan:'Perkembangan Belajar',catatan:'Catatan',target:'Target',hafalan_baru:'Hafalan Baru',
+  murajaah:'Murajaah',kelancaran:'Kelancaran',mutqin:'Mutqin',konsistensi_setoran:'Konsistensi Setoran',perbaikan_bacaan:'Perbaikan Bacaan',
+  adab:'Adab & Akhlak',kemandirian:'Kemandirian',kepatuhan:'Kepatuhan terhadap Aturan',kegiatan:'Kehidupan Pondok / Kegiatan',
+  perkembangan_pembinaan:'Perkembangan Pembinaan',isi:'Ringkasan Perkembangan'
+};
+const esc=v=>String(v??'-').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function fail(m){const x=document.getElementById('status');x.textContent=m;x.classList.add('error');document.getElementById('report').innerHTML='<div class="empty">Belum dapat menampilkan laporan.</div>'}
+function periodLabel(p){return (bulan[p.bulan]||('Bulan '+p.bulan))+' '+(p.tahun||'')}
+function formatTanggalWaktu(value){if(!value)return '-';const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);return new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Jakarta'}).format(d)+' WIB'}
+async function getReportPeople(laporanId){const {data,error}=await db.rpc('get_laporan_pengguna',{p_laporan_id:laporanId});if(error)return {};return Object.fromEntries((data||[]).map(x=>[x.user_id,x.nama||'Pengguna']))}
+async function init(){
+  const {data:{session}}=await db.auth.getSession();
+  if(!session){location.href='index.html';return}
+  const {data:u,error:ue}=await db.from('users').select('nama,username,role,aktif').eq('id',session.user.id).single();
+  if(ue||!u||u.role!=='wali_santri'||!u.aktif){await db.auth.signOut();location.href='index.html';return}
+  const {data:links,error:le}=await db.from('santri_wali').select('santri_id').eq('user_id',session.user.id).eq('aktif',true);
+  if(le)return fail(le.message);if(!links?.length)return fail('Belum ada santri yang terhubung dengan akun ini.');
+  const ids=links.map(x=>x.santri_id);
+  const {data:ss,error:se}=await db.from('santri').select('*').in('id',ids);
+  if(se)return fail(se.message);santriList=ss||[];
+  const {data:ps,error:pe}=await db.from('periode_laporan').select('id,bulan,tahun,semester,status').order('tahun',{ascending:false}).order('bulan',{ascending:false});
+  if(pe)return fail(pe.message);
+  const sel=document.getElementById('periode');sel.innerHTML='';
+  if(!ps?.length)sel.innerHTML='<option value="">Belum ada periode</option>';else ps.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=periodLabel(p);sel.appendChild(o)});
+  sel.onchange=loadReports;renderStudent();await loadReports();document.getElementById('status').textContent='Data berhasil dimuat.'
+}
+function renderStudent(){const b=document.getElementById('student');b.style.display='block';b.innerHTML='<strong>Santri yang terhubung</strong><span>'+santriList.map(s=>esc(s.nama_lengkap||s.nama_panggilan||'-')+' • NIS '+esc(s.nis||'-')).join('<br>')+'</span>'}
+async function loadReports(){
+  const pid=document.getElementById('periode').value;if(!pid)return;const out=document.getElementById('report');out.innerHTML='<div class="empty">Memuat laporan...</div>';let html='',found=0;
+  for(const s of santriList){
+    const {data:lb,error:e}=await db.from('laporan_bulanan').select('*').eq('santri_id',s.id).eq('periode_id',pid).limit(1).maybeSingle();
+    if(e){out.innerHTML='<div class="empty">Data laporan belum bisa dibaca.<br><br><small>'+esc(e.message)+'</small></div>';return}
+    if(!lb)continue;found++;html+=await buildReport(s,lb)
+  }
+  out.innerHTML=found?html:'<div class="empty">Belum ada laporan yang dapat ditampilkan untuk periode ini.<br>Laporan hanya tampil kepada wali setelah berstatus <b>Terbit</b>.</div>'
+}
+async function buildReport(s,lb){
+  const people=await getReportPeople(lb.id);
+  const publisher=lb.diterbitkan_oleh?(people[lb.diterbitkan_oleh]||'Pengguna'):null;
+  let html='<section class="section"><h3>📋 '+esc(s.nama_lengkap||s.nama_panggilan||'Santri')+'</h3><div class="body">';
+  html+='<div class="rows">'+[['Status laporan',lb.status==='terbit'?'Terbit':lb.status],['Tanggal terbit',formatTanggalWaktu(lb.diterbitkan_pada)],['Kelas',lb.kelas_snapshot],['Asrama',lb.asrama_snapshot]].map(x=>'<div class="row"><span class="label">'+x[0]+'</span><span class="value">'+esc(x[1]||'-')+'</span></div>').join('')+'</div>';
+  if(publisher)html+='<div class="published">Diterbitkan oleh <strong>'+esc(publisher)+'</strong></div>';
+  if(String(lb.status||'').toLowerCase()!=='terbit')return html+'<div class="note">Laporan ini belum diterbitkan.</div></div></section>';
+  for(const [name,table] of [['Akademik','laporan_akademik'],['Tahfizh','laporan_tahfizh'],['Kepengasuhan','laporan_kepengasuhan'],['Ringkasan Perkembangan','ringkasan_perkembangan']]){
+    let r=await db.from(table).select('*').eq('laporan_bulanan_id',lb.id).limit(1).maybeSingle();
+    if(r.error)r=await db.from(table).select('*').eq('laporan_id',lb.id).limit(1).maybeSingle();
+    if(!r.error&&r.data)html+='<div class="section" style="margin-top:12px"><h3>'+name+'</h3><div class="body">'+renderObject(r.data,people)+'</div></div>'
+  }
+  return html+'</div></section>'
+}
+function renderObject(o,people){
+  const ignore=['id','laporan_bulanan_id','laporan_id','created_at','updated_at','santri_id','status'];
+  const e=Object.entries(o).filter(([k,v])=>!ignore.includes(k)&&v!==null&&v!=='');
+  if(!e.length)return '<div class="muted">Belum ada rincian.</div>';
+  return '<div class="rows">'+e.map(([k,v])=>{
+    if(['diisi_oleh','dibuat_oleh'].includes(k)){return '<div class="row"><span class="label">'+(k==='diisi_oleh'?'Diisi oleh':'Dibuat oleh')+'</span><span class="value">'+esc(people[v]||'Pengguna')+'</span></div>'}
+    const label=labelMap[k]||k.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+    return '<div class="row"><span class="label">'+esc(label)+'</span><span class="value">'+esc(v)+'</span></div>'
+  }).join('')+'</div>'
+}
+document.getElementById('back').onclick=()=>location.href='wali.html';
+init();
+</script>
+</body>
+</html>
