@@ -1,1 +1,47 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Profil - Laporan Santri</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>body{font-family:Arial;margin:0;background:#f5f7fa;color:#18212f}.wrap{max-width:900px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}a{color:#18212f;text-decoration:none}.card{background:white;border:1px solid #e5e9ef;border-radius:14px;padding:18px;margin:12px 0}.row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef0f3}.row:last-child{border-bottom:0}.label{color:#718096}.back{padding:9px 12px;border:1px solid #dfe4ea;border-radius:9px;background:white}</style></head><body><main class="wrap"><div class="top"><h2>👤 Profil</h2><a class="back" href="wali.html">← Kembali</a></div><div id="content">Memuat...</div></main><script>const db=supabase.createClient('https://zcnpyqxsdpnunbeuyvxu.supabase.co','sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4');const esc=v=>String(v??'-').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));async function run(){const {data:{session}}=await db.auth.getSession();if(!session){location.href='index.html';return}const {data:u,error}=await db.from('users').select('nama,username,email,role,aktif').eq('id',session.user.id).single();if(error||!u||u.role!=='wali_santri'||!u.aktif){location.href='index.html';return}const {data:links}=await db.from('santri_wali').select('santri_id,hubungan,utama').eq('user_id',session.user.id).eq('aktif',true);const ids=(links||[]).map(x=>x.santri_id);const {data:santri}=ids.length?await db.from('santri').select('nama_lengkap,nis,status').in('id',ids):{data:[]};document.getElementById('content').innerHTML=`<section class="card"><h3>Data Akun</h3><div class="row"><span class="label">Nama</span><strong>${esc(u.nama)}</strong></div><div class="row"><span class="label">Username</span><strong>${esc(u.username)}</strong></div><div class="row"><span class="label">Email</span><strong>${esc(u.email)}</strong></div><div class="row"><span class="label">Peran</span><strong>Wali Santri</strong></div></section><section class="card"><h3>Santri Terhubung</h3>${(santri||[]).length?(santri||[]).map((s,i)=>`<div class="row"><span>${esc(s.nama_lengkap)}<br><span class="label">NIS ${esc(s.nis)}</span></span><strong>${esc(links[i]?.hubungan||'Wali')}</strong></div>`).join(''):'Belum ada santri terhubung.'}</section>`}run();</script></body></html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profil Wali - Laporan Santri</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;background:#f5f7fa;color:#18212f}.wrap{max-width:820px;margin:auto;padding:28px 20px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:28px}h2{margin:0;font-size:28px}.back{padding:10px 14px;border:1px solid #dfe4ea;border-radius:10px;background:#fff;color:#18212f;text-decoration:none;white-space:nowrap}.subtitle{color:#718096;margin:-12px 0 24px}.card{background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px;margin:16px 0;box-shadow:0 3px 12px rgba(20,35,55,.04)}h3{margin:0 0 16px;font-size:18px}.row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:13px 0;border-bottom:1px solid #eef0f3}.row:last-child{border-bottom:0}.label{color:#718096;font-size:14px}.value{text-align:right;font-weight:600;word-break:break-word}.student{padding:15px;border:1px solid #edf0f4;border-radius:12px;margin-top:10px}.student-name{font-weight:700;margin-bottom:5px}.empty{text-align:center;color:#718096;padding:18px}.status{display:inline-block;padding:6px 10px;border-radius:9px;background:#f0f2f5;font-size:12px}
+@media(max-width:600px){.wrap{padding:20px 14px 40px}h2{font-size:23px}.card{padding:18px}.row{flex-direction:column;gap:5px}.value{text-align:left}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="top"><h2>👤 Profil Wali</h2><a class="back" href="wali.html">← Kembali</a></div>
+<p class="subtitle">Informasi akun wali dan santri yang terhubung.</p>
+<div id="content">Memuat...</div>
+</main>
+<script>
+const db=supabase.createClient('https://zcnpyqxsdpnunbeuyvxu.supabase.co','sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4');
+const esc=v=>String(v??'-').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function run(){
+ const box=document.getElementById('content');
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){location.href='index.html';return}
+ const {data:u,error}=await db.from('users').select('nama,username,email,role,aktif').eq('id',session.user.id).single();
+ if(error||!u||u.role!=='wali_santri'||!u.aktif){location.href='index.html';return}
+ const {data:links,error:le}=await db.from('santri_wali').select('santri_id,hubungan,utama').eq('user_id',session.user.id).eq('aktif',true);
+ if(le){box.innerHTML='<div class="card empty">Data santri belum dapat dimuat.</div>';return}
+ const ids=(links||[]).map(x=>x.santri_id);
+ const {data:santri}=ids.length?await db.from('santri').select('nama_lengkap,nama_panggilan,nis,status').in('id',ids):{data:[]};
+ const relationMap={ayah:'Ayah',ibu:'Ibu',wali:'Wali',orang_tua:'Orang Tua'};
+ box.innerHTML=`
+ <section class="card"><h3>Data Akun</h3>
+ <div class="row"><span class="label">Nama</span><strong class="value">${esc(u.nama)}</strong></div>
+ <div class="row"><span class="label">Username</span><strong class="value">${esc(u.username)}</strong></div>
+ <div class="row"><span class="label">Email</span><strong class="value">${esc(u.email)}</strong></div>
+ <div class="row"><span class="label">Peran</span><strong class="value">Wali Santri</strong></div>
+ </section>
+ <section class="card"><h3>Santri Terhubung</h3>
+ ${(santri||[]).length?(santri||[]).map((s,i)=>`<div class="student"><div class="student-name">👤 ${esc(s.nama_lengkap)}</div><div class="label">NIS: ${esc(s.nis)}</div><div class="row"><span class="label">Hubungan</span><strong class="value">${esc(relationMap[links[i]?.hubungan]||links[i]?.hubungan||'Wali')}</strong></div><div class="row"><span class="label">Status</span><strong class="value"><span class="status">${esc(s.status||'aktif')}</span></strong></div></div>`).join(''):'<div class="empty">Belum ada santri terhubung.</div>'}
+ </section>`;
+}
+run();
+</script>
+</body>
+</html>
