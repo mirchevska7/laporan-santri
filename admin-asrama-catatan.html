@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Catatan Asrama - Laporan Santri</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial,sans-serif;max-width:900px;margin:30px auto;padding:0 16px;background:#f7f7f7;color:#222}.card{background:#fff;padding:22px;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 8px #0001}h1{margin-top:0}label{display:block;margin:14px 0 6px;font-weight:600}select,input,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccc;border-radius:8px;font:inherit}textarea{min-height:130px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}button{padding:10px 16px;border:0;border-radius:8px;cursor:pointer;background:#222;color:#fff;margin:14px 8px 0 0}button.secondary{background:#ddd;color:#222}.check{display:flex;gap:8px;align-items:center;margin-top:14px}.check input{width:auto}.msg{margin-top:14px;padding:10px;border-radius:8px;background:#eef6ee}.error{background:#fdecec}.item{border-top:1px solid #eee;padding:14px 0}.muted{color:#666;font-size:13px}@media(max-width:650px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Catatan Asrama</h1>
+<p class="muted">Mencatat kehidupan asrama dan perkembangan keseharian santri. Catatan ini bukan modul pelanggaran.</p>
+<div id="identity" class="muted">Memuat...</div>
+</div>
+<div class="card">
+<h2>Tambah Catatan</h2>
+<div class="row"><div><label for="santri">Santri</label><select id="santri"><option value="">Memuat santri...</option></select></div><div><label for="tanggal">Tanggal</label><input id="tanggal" type="date"></div></div>
+<label for="isi">Isi Catatan</label><textarea id="isi" placeholder="Contoh: aktif mengikuti kegiatan asrama dan mulai lebih mandiri menjaga kerapian kamar."></textarea>
+<label class="check"><input id="wali" type="checkbox"> Tampilkan kepada Wali Santri</label>
+<div><button id="save">Simpan Catatan</button><button class="secondary" onclick="location.href='admin-asrama.html'">Kembali</button></div>
+<div id="msg"></div>
+</div>
+<div class="card"><h2>Catatan Terbaru</h2><div id="list">Memuat...</div></div>
+<script>
+const SUPABASE_URL='https://zcnpyqxsdpnunbeuyvxu.supabase.co';
+const SUPABASE_KEY='sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let userId=null;
+const $=id=>document.getElementById(id);
+function message(text,error=false){$('msg').textContent=text;$('msg').className=error?'msg error':'msg';}
+async function guard(){
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){location.href='index.html';return false;}
+ userId=session.user.id;
+ const {data:u,error}=await db.from('users').select('nama,role,aktif').eq('id',userId).single();
+ if(error||!u?.aktif||u.role!=='admin_asrama'){document.body.innerHTML='<div class="card"><h2>Akses ditolak</h2><p>Halaman ini khusus Admin Asrama.</p></div>';return false;}
+ $('identity').textContent='Masuk sebagai: '+u.nama+' • Admin Asrama';
+ return true;
+}
+async function loadSantri(){
+ const {data,error}=await db.from('santri').select('id,nama_lengkap,nis').eq('status','aktif').order('nama_lengkap');
+ if(error){$('santri').innerHTML='<option>Gagal memuat santri</option>';return;}
+ $('santri').innerHTML='<option value="">Pilih santri</option>'+data.map(s=>`<option value="${s.id}">${s.nama_lengkap}${s.nis?' — '+s.nis:''}</option>`).join('');
+}
+async function loadNotes(){
+ const {data,error}=await db.from('catatan_santri').select('id,tanggal,isi,tampil_ke_wali,santri_id').eq('sumber','asrama').order('tanggal',{ascending:false}).limit(20);
+ if(error){$('list').textContent='Gagal memuat catatan.';return;}
+ if(!data?.length){$('list').textContent='Belum ada catatan Asrama.';return;}
+ const ids=[...new Set(data.map(x=>x.santri_id))];
+ const {data:s}=await db.from('santri').select('id,nama_lengkap').in('id',ids);
+ const names=Object.fromEntries((s||[]).map(x=>[x.id,x.nama_lengkap]));
+ $('list').innerHTML=data.map(x=>`<div class="item"><b>${names[x.santri_id]||'Santri'}</b><div class="muted">${x.tanggal} • Catatan Asrama • ${x.tampil_ke_wali?'Tampil ke wali':'Tidak tampil ke wali'}</div><div>${escapeHtml(x.isi)}</div></div>`).join('');
+}
+function escapeHtml(v){return String(v||'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&#92;','"':'&quot;'}[m]));}
+$('save').onclick=async()=>{
+ const santriId=$('santri').value,tanggal=$('tanggal').value||new Date().toISOString().slice(0,10),isi=$('isi').value.trim();
+ if(!santriId||!isi){message('Santri dan isi catatan wajib diisi.',true);return;}
+ $('save').disabled=true;message('Menyimpan...');
+ const {error}=await db.from('catatan_santri').insert({santri_id:santriId,tanggal,sumber:'asrama',pemberi_id:userId,isi,sifat:'catatan',tampil_ke_wali:$('wali').checked});
+ $('save').disabled=false;
+ if(error){message('Gagal menyimpan: '+error.message,true);return;}
+ message('Catatan Asrama berhasil disimpan.');$('isi').value='';$('wali').checked=false;await loadNotes();
+};
+(async()=>{if(await guard()){ $('tanggal').value=new Date().toISOString().slice(0,10);await loadSantri();await loadNotes();}})();
+</script>
+</body></html>
