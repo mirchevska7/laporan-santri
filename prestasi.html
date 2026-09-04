@@ -1,1 +1,99 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prestasi Santri</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>body{font-family:Arial;margin:0;background:#f5f7fa;color:#18212f}.wrap{max-width:900px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}a{color:#18212f;text-decoration:none}.card{background:white;border:1px solid #e5e9ef;border-radius:14px;padding:16px;margin:12px 0}.muted{color:#718096;font-size:13px}.tag{display:inline-block;padding:5px 9px;border-radius:8px;background:#f0f2f5;font-size:12px;margin:3px}.back{padding:9px 12px;border:1px solid #dfe4ea;border-radius:9px;background:white}</style></head><body><main class="wrap"><div class="top"><h2>🏆 Prestasi Santri</h2><a class="back" href="wali.html">← Kembali</a></div><div id="content" class="muted">Memuat...</div></main><script>const db=supabase.createClient('https://zcnpyqxsdpnunbeuyvxu.supabase.co','sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4');const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));async function run(){const {data:{session}}=await db.auth.getSession();if(!session){location.href='index.html';return}const {data:u}=await db.from('users').select('role,aktif').eq('id',session.user.id).single();if(!u||u.role!=='wali_santri'||!u.aktif){location.href='index.html';return}const {data:links}=await db.from('santri_wali').select('santri_id').eq('user_id',session.user.id).eq('aktif',true);const ids=(links||[]).map(x=>x.santri_id);if(!ids.length){document.getElementById('content').textContent='Belum ada santri terhubung.';return}const {data:rows,error}=await db.from('prestasi').select('tanggal,nama_prestasi,kategori,tingkat,keterangan,bukti_url').in('santri_id',ids).order('tanggal',{ascending:false});if(error){document.getElementById('content').textContent='Prestasi belum dapat dimuat: '+error.message;return}document.getElementById('content').innerHTML=rows?.length?rows.map(r=>`<article class="card"><h3>${esc(r.nama_prestasi||'-')}</h3><div class="muted">${esc(r.tanggal||'-')}</div><span class="tag">${esc(r.kategori||'lainnya')}</span><span class="tag">${esc(r.tingkat||'-')}</span><p>${esc(r.keterangan||'')}</p>${r.bukti_url?`<a href="${esc(r.bukti_url)}" target="_blank" rel="noopener">Lihat bukti</a>`:''}</article>`).join(''):'Belum ada prestasi yang tercatat.'}run();</script></body></html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prestasi Santri</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;background:#f5f7fa;color:#18212f}
+.wrap{max-width:900px;margin:auto;padding:28px 20px 50px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;gap:16px}
+h2{margin:0;font-size:28px}
+.subtitle{color:#718096;margin:8px 0 24px;font-size:15px}
+.back{padding:10px 14px;border:1px solid #dfe4ea;border-radius:10px;background:white;color:#18212f;text-decoration:none;white-space:nowrap}
+.card{background:white;border:1px solid #e3e8ef;border-radius:16px;padding:22px;margin:16px 0;box-shadow:0 3px 12px rgba(20,35,55,.04)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:1px solid #edf0f4;padding-bottom:16px;margin-bottom:18px}
+.title-wrap{min-width:0}
+.achievement-title{font-size:19px;font-weight:700;color:#18212f;margin:0 0 10px}
+.meta{display:flex;flex-wrap:wrap;gap:7px}
+.tag{display:inline-block;padding:6px 10px;border-radius:9px;background:#f0f2f5;color:#536173;font-size:12px;font-weight:600}
+.date{text-align:right;color:#18212f;font-weight:700;white-space:nowrap;font-size:14px}
+.note-text{font-size:16px;line-height:1.7;color:#344054;margin:0;white-space:pre-wrap}
+.by{margin-top:10px;color:#718096;font-size:14px}
+.by strong{color:#18212f}
+.empty{background:white;border:1px solid #e3e8ef;border-radius:16px;padding:28px;text-align:center;color:#718096}
+.info{margin:28px auto 0;max-width:650px;border:1px solid #e3e8ef;border-radius:14px;padding:15px 18px;text-align:center;color:#718096;font-size:14px;background:#fafbfc}
+@media(max-width:600px){.wrap{padding:20px 14px 40px}h2{font-size:23px}.top{align-items:flex-start}.card{padding:18px}.card-head{flex-direction:column}.date{text-align:left}.achievement-title{font-size:17px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <h2>🏆 Prestasi Santri</h2>
+    <a class="back" href="wali.html">← Kembali</a>
+  </div>
+  <p class="subtitle">Riwayat prestasi dan pencapaian santri.</p>
+  <div id="content" class="muted">Memuat...</div>
+  <div class="info">🏆 Prestasi yang tercatat untuk santri yang terhubung akan muncul di halaman ini.</div>
+</main>
+<script>
+const db=supabase.createClient(
+  'https://zcnpyqxsdpnunbeuyvxu.supabase.co',
+  'sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4'
+);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const categoryLabel={
+  kepengasuhan:'Kepengasuhan',
+  akademik:'Akademik',
+  tahfizh:'Tahfizh',
+  keterampilan_minat:'Keterampilan / Minat',
+  lainnya:'Lainnya'
+};
+function formatDate(value){
+  if(!value)return '-';
+  const d=new Date(value+'T00:00:00');
+  return new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'long',year:'numeric'}).format(d);
+}
+async function run(){
+  const {data:{session}}=await db.auth.getSession();
+  if(!session){location.href='index.html';return}
+  const {data:u}=await db.from('users').select('role,aktif').eq('id',session.user.id).single();
+  if(!u||u.role!=='wali_santri'||!u.aktif){location.href='index.html';return}
+  const {data:links,error:le}=await db.from('santri_wali').select('santri_id').eq('user_id',session.user.id).eq('aktif',true);
+  if(le){document.getElementById('content').textContent=le.message;return}
+  const ids=(links||[]).map(x=>x.santri_id);
+  if(!ids.length){document.getElementById('content').innerHTML='<div class="empty">Belum ada santri yang terhubung.</div>';return}
+  const {data:rows,error}=await db.from('prestasi').select('tanggal,nama_prestasi,kategori,tingkat,keterangan,created_by').in('santri_id',ids).order('tanggal',{ascending:false});
+  if(error){document.getElementById('content').textContent='Prestasi belum dapat dimuat: '+error.message;return}
+  if(!rows?.length){document.getElementById('content').innerHTML='<div class="empty">Belum ada prestasi yang tercatat.</div>';return}
+  const creatorIds=[...new Set(rows.map(r=>r.created_by).filter(Boolean))];
+  let creatorMap={};
+  if(creatorIds.length){
+    const {data:users}=await db.from('users').select('id,nama').in('id',creatorIds);
+    (users||[]).forEach(x=>creatorMap[x.id]=x.nama);
+  }
+  document.getElementById('content').innerHTML=rows.map(r=>{
+    const category=categoryLabel[r.kategori]||'Lainnya';
+    const creator=creatorMap[r.created_by]||'-';
+    return `<article class="card">
+      <div class="card-head">
+        <div class="title-wrap">
+          <h3 class="achievement-title">🏆 ${esc(r.nama_prestasi||'-')}</h3>
+          <div class="meta">
+            <span class="tag">${esc(category)}</span>
+            ${r.tingkat?`<span class="tag">${esc(r.tingkat)}</span>`:''}
+          </div>
+          <div class="by">Oleh: <strong>${esc(creator)}</strong></div>
+        </div>
+        <div class="date">📅 ${esc(formatDate(r.tanggal))}</div>
+      </div>
+      ${r.keterangan?`<p class="note-text">${esc(r.keterangan)}</p>`:''}
+    </article>`;
+  }).join('');
+}
+run();
+</script>
+</body>
+</html>
