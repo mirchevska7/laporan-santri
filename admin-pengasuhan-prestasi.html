@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prestasi Santri</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>body{font-family:Arial,sans-serif;max-width:900px;margin:30px auto;padding:0 16px}h1{margin-bottom:6px}label{display:block;margin-top:14px;font-weight:600}input,select,textarea{width:100%;box-sizing:border-box;padding:9px;margin-top:5px}button{margin-top:18px;padding:10px 16px;cursor:pointer}.msg{margin-top:14px;padding:10px;background:#f3f3f3}.item{border:1px solid #ddd;padding:12px;margin-top:10px}.back{display:inline-block;margin-bottom:20px}</style>
+</head>
+<body>
+<a class="back" href="admin-pengasuhan.html">← Kembali ke Admin Pengasuhan</a>
+<h1>Prestasi Santri</h1><p>Catat prestasi santri dan tampilkan kepada wali sesuai pengaturan.</p>
+
+<label>Santri</label><select id="santri"></select>
+<label>Tanggal</label><input id="tanggal" type="date">
+<label>Nama Prestasi</label><input id="nama" placeholder="Contoh: Juara 1 Lomba Pidato">
+<label>Kategori</label><select id="kategori"><option value="kepengasuhan">Kepengasuhan</option><option value="akademik">Akademik</option><option value="tahfizh">Tahfizh</option><option value="keterampilan_minat">Keterampilan/Minat</option><option value="lainnya">Lainnya</option></select>
+<label>Tingkat</label><input id="tingkat" placeholder="Contoh: Internal Pondok / Kecamatan / Kabupaten">
+<label>Keterangan</label><textarea id="keterangan" rows="4" placeholder="Keterangan tambahan"></textarea>
+<label>Bukti URL (opsional)</label><input id="bukti" type="url" placeholder="https://..."><br>
+<button id="simpan">Simpan Prestasi</button><div id="msg"></div>
+
+<h2>Prestasi Terbaru</h2><div id="list">Memuat...</div>
+<script>
+const SUPABASE_URL='https://zcnpyqxsdpnunbeuyvxu.supabase.co';
+const SUPABASE_KEY='sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+async function guard(){const {data:{session}}=await sb.auth.getSession();if(!session){location.href='index.html';return false}const {data:u,error}=await sb.from('users').select('nama,role').eq('id',session.user.id).single();if(error||u?.role!=='admin_pengasuhan'){await sb.auth.signOut();location.href='index.html';return false}return true}
+async function loadSantri(){const {data,error}=await sb.from('santri').select('id,nama_lengkap,nis').eq('status','aktif').order('nama_lengkap');if(error){$('msg').textContent=error.message;return}$('santri').innerHTML=(data||[]).map(s=>`<option value="${s.id}">${s.nama_lengkap} — ${s.nis||''}</option>`).join('')}
+async function loadList(){const {data,error}=await sb.from('prestasi').select('id,tanggal,nama_prestasi,kategori,tingkat,keterangan,santri_id,santri(nama_lengkap)').order('tanggal',{ascending:false}).limit(20);if(error){$('list').textContent=error.message;return}if(!data?.length){$('list').textContent='Belum ada prestasi.';return}$('list').innerHTML=data.map(p=>`<div class="item"><strong>${p.nama_prestasi}</strong><br>${p.santri?.nama_lengkap||'-'} · ${p.tanggal||'-'}<br>Kategori: ${p.kategori} · Tingkat: ${p.tingkat||'-'}${p.keterangan?`<br>${p.keterangan}`:''}</div>`).join('')}
+$('simpan').onclick=async()=>{const santri_id=$('santri').value;if(!santri_id){$('msg').textContent='Pilih santri.';return}const {data:{user}}=await sb.auth.getUser();const payload={santri_id,tanggal:$('tanggal').value||new Date().toISOString().slice(0,10),nama_prestasi:$('nama').value.trim(),kategori:$('kategori').value,tingkat:$('tingkat').value.trim()||null,keterangan:$('keterangan').value.trim()||null,bukti_url:$('bukti').value.trim()||null,created_by:user.id};if(!payload.nama_prestasi){$('msg').textContent='Nama prestasi wajib diisi.';return}const {error}=await sb.from('prestasi').insert(payload);if(error){$('msg').textContent='Gagal: '+error.message;return}$('msg').textContent='Prestasi berhasil disimpan.';$('nama').value='';$('tingkat').value='';$('keterangan').value='';$('bukti').value='';loadList()};
+(async()=>{if(await guard()){await loadSantri();$('tanggal').value=new Date().toISOString().slice(0,10);await loadList()}})();
+</script>
+</body></html>
