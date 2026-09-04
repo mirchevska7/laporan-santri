@@ -23,7 +23,7 @@ async function run(){
  const box=document.getElementById('content');
  const {data:{session}}=await db.auth.getSession();
  if(!session){location.href='index.html';return}
- const {data:u,error}=await db.from('users').select('nama,username,email,role,aktif').eq('id',session.user.id).single();
+ const {data:u,error}=await db.from('users').select('nama,username,role,aktif').eq('id',session.user.id).single();
  if(error||!u||u.role!=='wali_santri'||!u.aktif){location.href='index.html';return}
  const {data:links,error:le}=await db.from('santri_wali').select('santri_id,hubungan,utama').eq('user_id',session.user.id).eq('aktif',true);
  if(le){box.innerHTML='<div class="card empty">Data santri belum dapat dimuat.</div>';return}
@@ -34,7 +34,6 @@ async function run(){
  <section class="card"><h3>Data Akun</h3>
  <div class="row"><span class="label">Nama</span><strong class="value">${esc(u.nama)}</strong></div>
  <div class="row"><span class="label">Username</span><strong class="value">${esc(u.username)}</strong></div>
- <div class="row"><span class="label">Email</span><strong class="value">${esc(u.email)}</strong></div>
  <div class="row"><span class="label">Peran</span><strong class="value">Wali Santri</strong></div>
  </section>
  <section class="card"><h3>Santri Terhubung</h3>
