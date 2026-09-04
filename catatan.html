@@ -1,1 +1,63 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Catatan Santri</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>body{font-family:Arial;margin:0;background:#f5f7fa;color:#18212f}.wrap{max-width:900px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}a{color:#18212f;text-decoration:none}.card{background:white;border:1px solid #e5e9ef;border-radius:14px;padding:16px;margin:12px 0}.muted{color:#718096;font-size:13px}.tag{display:inline-block;padding:5px 9px;border-radius:8px;background:#f0f2f5;font-size:12px;margin-top:8px}.back{padding:9px 12px;border:1px solid #dfe4ea;border-radius:9px;background:white}</style></head><body><main class="wrap"><div class="top"><h2>📝 Catatan Santri</h2><a class="back" href="wali.html">← Kembali</a></div><div id="content" class="muted">Memuat...</div></main><script>const db=supabase.createClient('https://zcnpyqxsdpnunbeuyvxu.supabase.co','sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4');const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));async function run(){const {data:{session}}=await db.auth.getSession();if(!session){location.href='index.html';return}const {data:u}=await db.from('users').select('nama,role,aktif').eq('id',session.user.id).single();if(!u||u.role!=='wali_santri'||!u.aktif){location.href='index.html';return}const {data:links,error}=await db.from('santri_wali').select('santri_id').eq('user_id',session.user.id).eq('aktif',true);if(error){document.getElementById('content').textContent=error.message;return}const ids=(links||[]).map(x=>x.santri_id);if(!ids.length){document.getElementById('content').textContent='Belum ada santri terhubung.';return}const {data:rows,error:re}=await db.from('catatan_santri').select('tanggal,sumber,isi,sifat').in('santri_id',ids).eq('tampil_ke_wali',true).order('tanggal',{ascending:false});if(re){document.getElementById('content').textContent='Catatan belum dapat dimuat: '+re.message;return}document.getElementById('content').innerHTML=rows?.length?rows.map(r=>`<article class="card"><strong>${esc(r.tanggal||'-')}</strong><div class="muted">Sumber: ${esc(r.sumber||'-')}</div><p>${esc(r.isi||'-')}</p><span class="tag">${esc(r.sifat||'catatan')}</span></article>`).join(''):'Belum ada catatan yang ditampilkan kepada wali.'}run();</script></body></html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Catatan Santri</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;background:#f5f7fa;color:#18212f}
+.wrap{max-width:900px;margin:auto;padding:28px 20px 50px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;gap:16px}
+h2{margin:0;font-size:28px}
+.subtitle{color:#718096;margin:8px 0 24px;font-size:15px}
+.back{padding:10px 14px;border:1px solid #dfe4ea;border-radius:10px;background:white;color:#18212f;text-decoration:none;white-space:nowrap}
+.card{background:white;border:1px solid #e3e8ef;border-radius:16px;padding:22px;margin:16px 0;box-shadow:0 3px 12px rgba(20,35,55,.04)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:1px solid #edf0f4;padding-bottom:16px;margin-bottom:18px}
+.title-wrap{min-width:0}
+.note-title{display:inline-block;padding:8px 13px;border:1px solid #e7c66b;border-radius:10px;background:#fffaf0;color:#a66b00;font-weight:700;font-size:15px}
+.by{margin-top:12px;color:#718096;font-size:14px}.by strong{color:#18212f}
+.date{text-align:right;color:#18212f;font-weight:700;white-space:nowrap;font-size:14px}
+.note-text{font-size:16px;line-height:1.75;color:#344054;margin:0;white-space:pre-wrap}
+.empty{background:white;border:1px solid #e3e8ef;border-radius:16px;padding:28px;text-align:center;color:#718096}
+.info{margin:28px auto 0;max-width:650px;border:1px solid #e3e8ef;border-radius:14px;padding:15px 18px;text-align:center;color:#718096;font-size:14px;background:#fafbfc}
+@media(max-width:600px){.wrap{padding:20px 14px 40px}h2{font-size:23px}.top{align-items:flex-start}.card{padding:18px}.card-head{flex-direction:column}.date{text-align:left}.note-title{font-size:14px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><h2>📝 Catatan Santri</h2><a class="back" href="wali.html">← Kembali</a></div>
+  <p class="subtitle">Riwayat catatan tentang perkembangan dan perilaku santri.</p>
+  <div id="content" class="muted">Memuat...</div>
+  <div class="info">📄 Hanya catatan yang ditampilkan kepada wali yang akan muncul di halaman ini.</div>
+</main>
+<script>
+const db=supabase.createClient('https://zcnpyqxsdpnunbeuyvxu.supabase.co','sb_publishable_kxhfCkYxoo7V8-SNu-u6IA_ocVOf4S4');
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sourceTitle={kepengasuhan:'Catatan Kepengasuhan',wali_asrama:'Catatan Asrama',wali_kelas:'Catatan Akademik',tahfizh:'Catatan Tahfizh'};
+const sourceLabel={kepengasuhan:'Admin Pengasuhan',wali_asrama:'Admin Asrama',wali_kelas:'Admin Akademik',tahfizh:'Admin Tahfizh'};
+function formatDate(value){if(!value)return '-';const d=new Date(value+'T00:00:00');return new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'long',year:'numeric'}).format(d)}
+async function run(){
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){location.href='index.html';return}
+ const {data:u}=await db.from('users').select('nama,role,aktif').eq('id',session.user.id).single();
+ if(!u||u.role!=='wali_santri'||!u.aktif){location.href='index.html';return}
+ const {data:links,error}=await db.from('santri_wali').select('santri_id').eq('user_id',session.user.id).eq('aktif',true);
+ if(error){document.getElementById('content').textContent=error.message;return}
+ const ids=(links||[]).map(x=>x.santri_id);
+ if(!ids.length){document.getElementById('content').innerHTML='<div class="empty">Belum ada santri yang terhubung.</div>';return}
+ const {data:rows,error:re}=await db.from('catatan_santri').select('tanggal,sumber,pemberi_id,isi,sifat').in('santri_id',ids).eq('tampil_ke_wali',true).order('tanggal',{ascending:false});
+ if(re){document.getElementById('content').textContent='Catatan belum dapat dimuat: '+re.message;return}
+ if(!rows?.length){document.getElementById('content').innerHTML='<div class="empty">Belum ada catatan yang ditampilkan kepada wali.</div>';return}
+ const pemberiIds=[...new Set(rows.map(r=>r.pemberi_id).filter(Boolean))];let pemberiMap={};
+ if(pemberiIds.length){const {data:users}=await db.from('users').select('id,nama,role').in('id',pemberiIds);(users||[]).forEach(x=>pemberiMap[x.id]=x)}
+ document.getElementById('content').innerHTML=rows.map(r=>{
+  const user=pemberiMap[r.pemberi_id];const title=sourceTitle[r.sumber]||('Catatan '+(r.sumber||'Santri'));const by=user?.nama||sourceLabel[r.sumber]||'-';
+  return `<article class="card"><div class="card-head"><div class="title-wrap"><div class="note-title">📝 ${esc(title)}</div><div class="by">Oleh: <strong>${esc(by)}</strong></div></div><div class="date">📅 ${esc(formatDate(r.tanggal))}</div></div><p class="note-text">${esc(r.isi||'-')}</p></article>`;
+ }).join('');
+}
+run();
+</script>
+</body>
+</html>
